@@ -1,32 +1,20 @@
 import 'package:flutter/material.dart';
-import 'screens/splash_screen.dart';
-import 'screens/login_screen.dart';
-import 'screens/home_screen.dart';
-import 'screens/routes_screen.dart';
+import 'app_routes.dart';
+import 'theme/app_theme.dart';
 
-void main() {
-  runApp(const BusApp());
-}
+void main() => runApp(const MyApp());
 
-class BusApp extends StatelessWidget {
-  const BusApp({super.key});
+class MyApp extends StatelessWidget {
+  const MyApp({super.key});
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      debugShowCheckedModeBanner: false,
       title: 'Bus App',
-      theme: ThemeData(
-        useMaterial3: true,
-        colorSchemeSeed: Colors.blue,
-      ),
-      initialRoute: SplashScreen.route,
-      routes: {
-        SplashScreen.route: (_) => const SplashScreen(),
-        LoginScreen.route: (_) => const LoginScreen(),
-        HomeScreen.route: (_) => const HomeScreen(),
-        RoutesScreen.route: (_) => const RoutesScreen(),
-      },
+      debugShowCheckedModeBanner: false,
+      theme: AppTheme.light(),
+      initialRoute: AppRoutes.login,
+      routes: AppRoutes.routes,
     );
   }
 }
