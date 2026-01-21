@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../widgets/app_scaffold.dart';
 import '../features/routes/routes_models.dart';
 import '../features/routes/routes_service.dart';
+import '../core/api/error_mapper.dart';
 import 'stop_eta_screen.dart';
 
 class RouteStopsScreen extends StatefulWidget {
@@ -42,7 +43,7 @@ class _RouteStopsScreenState extends State<RouteStopsScreen> {
     } catch (e) {
       if (!mounted) return;
       setState(() {
-        _error = e.toString().replaceFirst('Exception: ', '');
+        _error = ErrorMapper.toUserMessage(e);
         _loading = false;
       });
     }
@@ -74,7 +75,10 @@ class _RouteStopsScreenState extends State<RouteStopsScreen> {
                     children: [
                       Text(_error!, textAlign: TextAlign.center),
                       const SizedBox(height: 12),
-                      ElevatedButton(onPressed: _load, child: const Text('Reintentar')),
+                      ElevatedButton(
+                        onPressed: _load,
+                        child: const Text('Reintentar'),
+                      ),
                     ],
                   ),
                 )
@@ -85,15 +89,20 @@ class _RouteStopsScreenState extends State<RouteStopsScreen> {
                     final s = _stops[i];
                     return Card(
                       elevation: 0,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(18),
+                      ),
                       child: ListTile(
-                        title: Text(s.nombre, style: const TextStyle(fontWeight: FontWeight.w800)),
-                        subtitle: Text('Calle principal: ${s.callePrincipal}\nCalle secundaria: ${s.calleSecundaria}'),
+                        title: Text(
+                          s.nombre,
+                          style: const TextStyle(fontWeight: FontWeight.w800),
+                        ),
+                        subtitle: Text(
+                          'Calle principal: ${s.callePrincipal}\n'
+                          'Calle secundaria: ${s.calleSecundaria}',
+                        ),
                         trailing: const Icon(Icons.chevron_right_rounded),
-                        onTap: () {
-                          debugPrint('STOP TAP => ${s.nombre} | tiempo=${s.tiempo}');
-                          _openStop(s);
-                        },
+                        onTap: () => _openStop(s),
                       ),
                     );
                   },

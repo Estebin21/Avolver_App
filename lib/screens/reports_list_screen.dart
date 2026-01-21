@@ -4,6 +4,7 @@ import '../features/reports/reports_models.dart';
 import '../features/reports/reports_service.dart';
 import '../features/routes/routes_service.dart';
 import '../features/routes/routes_models.dart';
+import '../core/api/error_mapper.dart';
 
 class ReportsListScreen extends StatefulWidget {
   const ReportsListScreen({super.key});
@@ -35,7 +36,6 @@ class _ReportsListScreenState extends State<ReportsListScreen> {
     });
 
     try {
-      // 🔹 cargar rutas y reportes en paralelo
       final results = await Future.wait([
         _routesService.listRoutes(),
         _reportsService.listReports(),
@@ -57,7 +57,7 @@ class _ReportsListScreenState extends State<ReportsListScreen> {
     } catch (e) {
       if (!mounted) return;
       setState(() {
-        _error = e.toString().replaceFirst('Exception: ', '');
+        _error = ErrorMapper.toUserMessage(e);
         _loading = false;
       });
     }
@@ -88,7 +88,10 @@ class _ReportsListScreenState extends State<ReportsListScreen> {
                     children: [
                       Text(_error!, textAlign: TextAlign.center),
                       const SizedBox(height: 12),
-                      ElevatedButton(onPressed: _loadAll, child: const Text('Reintentar')),
+                      ElevatedButton(
+                        onPressed: _loadAll,
+                        child: const Text('Reintentar'),
+                      ),
                     ],
                   ),
                 )
@@ -103,7 +106,9 @@ class _ReportsListScreenState extends State<ReportsListScreen> {
 
                       return Card(
                         elevation: 0,
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(18),
+                        ),
                         child: ListTile(
                           title: Text(
                             r.motivo,
