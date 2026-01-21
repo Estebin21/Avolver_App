@@ -27,10 +27,7 @@ class _StopEtaScreenState extends State<StopEtaScreen> with WidgetsBindingObserv
   bool _loading = true;
   String? _error;
 
-  // valor que se muestra (se actualizará)
   int? _eta;
-
-  // Para identificar la parada aunque no haya id
   late final String _stopKey;
 
   @override
@@ -39,11 +36,8 @@ class _StopEtaScreenState extends State<StopEtaScreen> with WidgetsBindingObserv
     WidgetsBinding.instance.addObserver(this);
 
     _stopKey = _buildStopKey(widget.stop);
-
-    // set inicial con lo que venía
     _eta = _parseEta(widget.stop.tiempo);
 
-    // carga inicial + empieza polling
     _refreshEta(showSpinner: true);
     _startPolling();
   }
@@ -55,13 +49,17 @@ class _StopEtaScreenState extends State<StopEtaScreen> with WidgetsBindingObserv
     super.dispose();
   }
 
-  // Si el usuario cambia de app, pausamos/reanudamos para no gastar requests
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
+    // Pausa el polling cuando la app no está activa
     if (state == AppLifecycleState.paused || state == AppLifecycleState.inactive) {
       _timer?.cancel();
       _timer = null;
-    } else if (state == AppLifecycleState.resumed) {
+      return;
+    }
+
+    // Reanuda el polling al volver
+    if (state == AppLifecycleState.resumed) {
       _startPolling();
       _refreshEta(showSpinner: false);
     }
@@ -70,8 +68,8 @@ class _StopEtaScreenState extends State<StopEtaScreen> with WidgetsBindingObserv
   void _startPolling() {
     _timer?.cancel();
 
-    // cada 12 segundos (puedes cambiar a 10/15)
-    _timer = Timer.periodic(const Duration(seconds: 12), (_) {
+    // ✅ Cada 3 minutos
+    _timer = Timer.periodic(const Duration(minutes: 3), (_) {
       _refreshEta(showSpinner: false);
     });
   }
@@ -95,22 +93,15 @@ class _StopEtaScreenState extends State<StopEtaScreen> with WidgetsBindingObserv
         _error = null;
       });
     } else {
-      // sin spinner grande, solo limpia error
       if (mounted) setState(() => _error = null);
     }
 
     try {
       final detail = await _service.getRouteById(widget.routeId);
 
-      // busca la misma parada
-      StopInfo? found;
-
-      // Si tu StopInfo tiene "id", usa esto (descomenta y ajusta si aplica):
-      // found = detail.paradas.firstWhere((p) => p.id == widget.stop.id);
-
-      found = detail.paradas.firstWhere(
+      final found = detail.paradas.firstWhere(
         (p) => _buildStopKey(p) == _stopKey,
-        orElse: () => widget.stop, // fallback
+        orElse: () => widget.stop,
       );
 
       final newEta = _parseEta(found.tiempo);
@@ -134,13 +125,6 @@ class _StopEtaScreenState extends State<StopEtaScreen> with WidgetsBindingObserv
     return AppScaffold(
       title: 'Tiempo estimado',
       subtitle: widget.stop.nombre,
-      bottom: SizedBox(
-        width: double.infinity,
-        child: OutlinedButton(
-          onPressed: () => _refreshEta(showSpinner: true),
-          child: const Text('Actualizar ahora'),
-        ),
-      ),
       child: _loading
           ? const Center(child: CircularProgressIndicator())
           : _error != null
@@ -165,8 +149,10 @@ class _StopEtaScreenState extends State<StopEtaScreen> with WidgetsBindingObserv
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(widget.stop.nombre,
-                            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w900)),
+                        Text(
+                          widget.stop.nombre,
+                          style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w900),
+                        ),
                         const SizedBox(height: 8),
                         Text('Calle principal: ${widget.stop.callePrincipal}'),
                         Text('Calle secundaria: ${widget.stop.calleSecundaria}'),
@@ -180,11 +166,6 @@ class _StopEtaScreenState extends State<StopEtaScreen> with WidgetsBindingObserv
                               style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w800),
                             ),
                           ],
-                        ),
-                        const SizedBox(height: 10),
-                        Text(
-                          'Se actualiza automáticamente cada 12 segundos.',
-                          style: TextStyle(color: Colors.grey[700], fontSize: 12),
                         ),
                       ],
                     ),
