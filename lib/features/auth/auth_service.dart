@@ -9,7 +9,9 @@ import '../../core/storage/token_storage.dart';
 class AuthService {
   final ApiClient _api = ApiClient();
 
-  // ✅ REGISTRO -> endpoint_id "03"
+  // =========================
+  // REGISTRO -> endpoint_id "03"
+  // =========================
   Future<void> register({
     required String nombre,
     required String apellido,
@@ -23,7 +25,10 @@ class AuthService {
       'password': password,
     };
 
-    final body = GatewayEnvelope.buildJson(endpointId: '03', requestObj: requestObj);
+    final body = GatewayEnvelope.buildJson(
+      endpointId: '03',
+      requestObj: requestObj,
+    );
 
     try {
       await _api.dio.post(AppConstants.gatewayUrl, data: body);
@@ -32,7 +37,9 @@ class AuthService {
     }
   }
 
-  // ✅ LOGIN -> endpoint_id "04"
+  // =========================
+  // LOGIN -> endpoint_id "04"
+  // =========================
   Future<void> login({
     required String correo,
     required String password,
@@ -42,16 +49,21 @@ class AuthService {
       'password': password,
     };
 
-    final body = GatewayEnvelope.buildJson(endpointId: '04', requestObj: requestObj);
+    final body = GatewayEnvelope.buildJson(
+      endpointId: '04',
+      requestObj: requestObj,
+    );
 
     try {
-      final res = await _api.dio.post(AppConstants.gatewayUrl, data: body);
+      final res = await _api.dio.post(
+        AppConstants.gatewayUrl,
+        data: body,
+      );
 
-      // Ajusta si tu backend devuelve token con otra clave
       final token = _extractToken(res.data);
 
       if (token == null || token.isEmpty) {
-        throw Exception('Login OK pero no llegó token en la respuesta.');
+        throw Exception('Login exitoso, pero no se recibió token.');
       }
 
       await TokenStorage.saveToken(token);
@@ -60,13 +72,21 @@ class AuthService {
     }
   }
 
+  // =========================
+  // LOGOUT (NUEVO)
+  // =========================
+  Future<void> logout() async {
+    await TokenStorage.clear();
+  }
+
+  // =========================
+  // TOKEN PARSER
+  // =========================
   String? _extractToken(dynamic data) {
-    // Caso 1: { token: "..." } o { access_token: "..." }
     if (data is Map) {
       final t = data['access_token'] ?? data['token'];
       if (t != null) return t.toString();
 
-      // Caso 2: { response: "<json string>" }
       final resp = data['response'];
       if (resp is String) {
         try {
@@ -79,7 +99,6 @@ class AuthService {
       }
     }
 
-    // Caso 3: respuesta directa string json
     if (data is String) {
       try {
         final parsed = jsonDecode(data);
@@ -93,6 +112,9 @@ class AuthService {
     return null;
   }
 
+  // =========================
+  // ERROR FRIENDLY (SE MANTIENE)
+  // =========================
   String _friendlyError(DioException e) {
     final data = e.response?.data;
     if (data is Map) {

@@ -1,9 +1,23 @@
 import 'package:flutter/material.dart';
 import '../app_routes.dart';
 import '../widgets/brand_scaffold.dart';
+import '../features/auth/auth_service.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
+
+  Future<void> _logout(BuildContext context) async {
+    final auth = AuthService();
+    await auth.logout();
+
+    if (!context.mounted) return;
+
+    Navigator.pushNamedAndRemoveUntil(
+      context,
+      AppRoutes.login,
+      (_) => false,
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -11,6 +25,17 @@ class HomeScreen extends StatelessWidget {
       showBack: false,
       title: 'Menú principal',
       subtitle: 'Elige una opción para continuar',
+
+      // 👇 BOTÓN CERRAR SESIÓN
+      bottom: SizedBox(
+        width: double.infinity,
+        child: OutlinedButton.icon(
+          icon: const Icon(Icons.logout),
+          label: const Text('Cerrar sesión'),
+          onPressed: () => _logout(context),
+        ),
+      ),
+
       child: ListView(
         children: [
           _MenuCard(
@@ -30,7 +55,7 @@ class HomeScreen extends StatelessWidget {
           ),
           const SizedBox(height: 18),
 
-          // “Tip” para que se vea más app real
+          // Tip visual
           Card(
             elevation: 0,
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
@@ -45,7 +70,10 @@ class HomeScreen extends StatelessWidget {
                       borderRadius: BorderRadius.circular(14),
                       color: Theme.of(context).colorScheme.primary.withOpacity(0.10),
                     ),
-                    child: Icon(Icons.info_outline, color: Theme.of(context).colorScheme.primary),
+                    child: Icon(
+                      Icons.info_outline,
+                      color: Theme.of(context).colorScheme.primary,
+                    ),
                   ),
                   const SizedBox(width: 12),
                   Expanded(
@@ -107,7 +135,10 @@ class _MenuCard extends StatelessWidget {
                   children: [
                     Text(
                       title,
-                      style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w900),
+                      style: const TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w900,
+                      ),
                     ),
                     const SizedBox(height: 4),
                     Text(
