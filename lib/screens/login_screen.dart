@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../app_routes.dart';
 import '../features/auth/auth_service.dart';
 import '../widgets/brand_scaffold.dart';
+import '../core/api/error_mapper.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -14,8 +15,9 @@ class _LoginScreenState extends State<LoginScreen> {
   final _correoCtrl = TextEditingController();
   final _passCtrl = TextEditingController();
   final _auth = AuthService();
+
   bool _loading = false;
-  bool _hide = true;
+  bool _hidePassword = true;
 
   @override
   void dispose() {
@@ -30,20 +32,22 @@ class _LoginScreenState extends State<LoginScreen> {
 
     if (correo.isEmpty || password.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Completa correo y contraseña.')),
+        const SnackBar(content: Text('Completa todos los campos')),
       );
       return;
     }
 
     setState(() => _loading = true);
+
     try {
       await _auth.login(correo: correo, password: password);
+
       if (!mounted) return;
       Navigator.pushReplacementNamed(context, AppRoutes.home);
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(e.toString().replaceFirst('Exception: ', ''))),
+        SnackBar(content: Text(ErrorMapper.toUserMessage(e))),
       );
     } finally {
       if (mounted) setState(() => _loading = false);
@@ -70,42 +74,51 @@ class _LoginScreenState extends State<LoginScreen> {
                     keyboardType: TextInputType.emailAddress,
                     decoration: const InputDecoration(
                       labelText: 'Correo',
-                      prefixIcon: Icon(Icons.mail_outline),
+                      prefixIcon: Icon(Icons.email_outlined),
                     ),
                   ),
                   const SizedBox(height: 12),
                   TextField(
                     controller: _passCtrl,
-                    obscureText: _hide,
+                    obscureText: _hidePassword,
                     decoration: InputDecoration(
                       labelText: 'Contraseña',
                       prefixIcon: const Icon(Icons.lock_outline),
                       suffixIcon: IconButton(
-                        onPressed: () => setState(() => _hide = !_hide),
-                        icon: Icon(_hide ? Icons.visibility : Icons.visibility_off),
+                        icon: Icon(
+                          _hidePassword ? Icons.visibility : Icons.visibility_off,
+                        ),
+                        onPressed: () {
+                          setState(() => _hidePassword = !_hidePassword);
+                        },
                       ),
                     ),
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 18),
                   SizedBox(
                     width: double.infinity,
-                    child: ElevatedButton.icon(
+                    child: ElevatedButton(
                       onPressed: _loading ? null : _doLogin,
-                      icon: _loading
-                          ? const SizedBox(height: 18, width: 18, child: CircularProgressIndicator(strokeWidth: 2))
-                          : const Icon(Icons.login),
-                      label: Text(_loading ? 'Ingresando...' : 'Ingresar'),
+                      child: _loading
+                          ? const SizedBox(
+                              height: 20,
+                              width: 20,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            )
+                          : const Text('Ingresar'),
                     ),
                   ),
                 ],
               ),
             ),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 14),
           Center(
             child: TextButton(
-              onPressed: _loading ? null : () => Navigator.pushNamed(context, AppRoutes.register),
-              child: const Text('¿No tienes cuenta? Crear una'),
+              onPressed: _loading
+                  ? null
+                  : () => Navigator.pushNamed(context, AppRoutes.register),
+              child: const Text('¿No tienes cuenta? Regístrate'),
             ),
           ),
         ],
